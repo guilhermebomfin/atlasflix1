@@ -11,7 +11,7 @@ COPY . .
 RUN yarn install
 
 # Expõe a porta 3000 (se necessário)
-EXPOSE 3000
+EXPOSE 5432
 
 # Define o comando de entrada para iniciar a aplicação
 CMD ["yarn", "dev"]
