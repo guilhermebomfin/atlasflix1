@@ -2,10 +2,23 @@ import "reflect-metadata";
 import express from "express";
 import "./database";
 import { routes } from "./routes";
-const app= express();
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import { createConnection } from 'typeorm';
+import cookieParser from 'cookie-parser';
+import dotenv from 'dotenv';
 
-app.use(express.json());
+dotenv.config();
+
+const app = express();
+app.use(cors());
+app.use(bodyParser.json());
+app.use(cookieParser());
 
 app.use(routes);
 
-app.listen(3000, ()=> console.log("Server is running"));
+const PORT = process.env.PORT || 3000;
+
+createConnection().then(async () => {
+    app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+}).catch(error => console.log(error));

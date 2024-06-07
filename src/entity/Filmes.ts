@@ -17,6 +17,6 @@ export class Filmes {
   @Column({ length: 20, nullable: false })
   genero: string;
 
-  @Column({ type: 'bytea', nullable: false })
-  poster: Buffer;
+  @Column({ type: 'varchar', nullable: false })
+  poster: string;
 }

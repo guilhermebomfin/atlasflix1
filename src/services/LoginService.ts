@@ -1,36 +1,36 @@
-
-import { getRepository } from "typeorm";
+import { getRepository } from 'typeorm';
 import { Usuario } from "../entity/Usuario";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
-dotenv.config();
-
-type LoginRequest = {
-    email: string;
-    senha: string;
-}
+// Função para gerar um token JWT
+const generateToken = (id: number, isAdmin: boolean): string => {
+  return jwt.sign({ id, isAdmin }, process.env.JWT_SECRET || 'defaultSecret', { expiresIn: '1h' });
+};
 
 export class LoginService {
-    async execute({ email, senha }: LoginRequest): Promise<string | null> {
-        const userRepository = getRepository(Usuario);
+  static async login(email: string, senha: string): Promise<string | null> {
+    try {
+      const userRepository = getRepository(Usuario);
+      const usuario = await userRepository.findOne({ where: { email } });
 
-        try {
-            // Buscar usuário com o email fornecido
-            const usuario = await userRepository.findOne({ where: { email } });
+      if (!usuario) {
+        return null; // Usuário não encontrado
+      }
 
-            // Verificar se o usuário existe e se a senha está correta
-            if (usuario && await bcrypt.compare(senha, usuario.senha)) {
-                // Gerar token JWT
-                const token = jwt.sign({ id: usuario.iduser, email: usuario.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-                return token; // Retorna o token JWT se o login for bem-sucedido
-            } else {
-                return null; // Retorna null se o login falhar
-            }
-        } catch (error) {
-            throw new Error("Ocorreu um erro ao verificar o login."); // Lança um erro se houver algum problema na verificação do login
-        }
+      // Verifica se a senha fornecida corresponde à senha armazenada no banco de dados
+      const isValidPassword = await bcrypt.compare(senha, usuario.senha);
+      if (!isValidPassword) {
+        return null; // Senha inválida
+      }
+
+      // Gera o token JWT
+      const token = generateToken(usuario.iduser, usuario.isadmin);
+
+      return token;
+    } catch (error) {
+      console.error('Erro ao fazer login:', error);
+      throw new Error('Erro interno do servidor');
     }
+  }
 }
-

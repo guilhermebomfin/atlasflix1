@@ -17,4 +17,6 @@ export class Usuario {
   @Column({ length: 100, nullable: false })
   senha: string;
 
+  @Column({ default: false }) 
+  isadmin: boolean;
 }

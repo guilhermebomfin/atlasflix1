@@ -1,6 +1,6 @@
-// CreateUsuarioController.ts
 import { Request, Response } from "express";
 import { CreateUsuarioService } from "../services/CreateUsuarioService";
+import bcrypt from 'bcrypt';
 
 export class CreateUsuarioController {
     private createUsuarioService: CreateUsuarioService;
@@ -20,7 +20,8 @@ export class CreateUsuarioController {
                 throw new Error("Nome, email e senha são obrigatórios.");
             }
 
-            const usuario = await this.createUsuarioService.createUsuario({ nome, email, senha });
+            const hashedSenha = await bcrypt.hash(senha, 10);
+            const usuario = await this.createUsuarioService.createUsuario({ nome, email, senha: hashedSenha });
             return response.json(usuario);
         } catch (error) {
             return response.status(400).json({ error: "Ocorreu um erro ao criar o usuário.", details: error.message });
@@ -29,11 +30,15 @@ export class CreateUsuarioController {
 
     async handleUpdate(request: Request, response: Response) {
         const { id } = request.params;
-        const newData = request.body;
+        const { senha, ...newData } = request.body;
 
         try {
+            if (senha) {
+                newData.senha = await bcrypt.hash(senha, 10);
+            }
+
             const usuario = await this.createUsuarioService.updateUsuario(parseInt(id), newData);
-            if (usuario === undefined) { // Corrigindo o erro aqui
+            if (!usuario) {
                 return response.status(404).json({ error: "Usuário não encontrado." });
             }
             return response.json(usuario);
@@ -47,7 +52,7 @@ export class CreateUsuarioController {
 
         try {
             const result = await this.createUsuarioService.deleteUsuario(parseInt(id));
-            if (result === undefined) { // Corrigindo o erro aqui
+            if (result === undefined) {
                 return response.status(404).json({ error: "Usuário não encontrado." });
             }
             return response.json({ message: "Usuário excluído com sucesso." });
@@ -56,4 +61,3 @@ export class CreateUsuarioController {
         }
     }
 }
-
